@@ -1,0 +1,8 @@
+[package]
+name = "artificial-systems"
+description = "Computational simulation of artifical systems"
+authors = ["evf"]
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
