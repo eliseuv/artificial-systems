@@ -1,6 +1,5 @@
 use std::{
     fmt::Display,
-    io::{self, Write},
     time::{Duration, Instant},
 };
 
