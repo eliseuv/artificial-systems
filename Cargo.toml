@@ -6,3 +6,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+
+# Iteration
+itertools = "0.14.0"
+
+# Random number
+rand = "0.8.0"
+rand_xoshiro = "0.7.0"
+rand_distr = "0.4.0"
+
+# ndarray
+ndarray = { version = "0.16.1", features = ["rayon", "serde"] }
+ndarray-rand = "0.15.0"
+ndarray-stats = "0.6.0"
