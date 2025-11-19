@@ -1,0 +1,92 @@
+[package]
+name = "artificial-systems"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+# CLI Argument Parser
+clap = { version = "4.5.52", features = ["derive"] }
+
+# Iteration Tools
+itertools = "0.14.0"
+
+###########
+# Logging #
+###########
+
+log = "0.4.28"
+colog = "1.4.0"
+
+##################
+# Error handling #
+##################
+
+# Generic errors
+anyhow = "1.0.100"
+thiserror = "2.0.17"
+
+#############
+# Numerical #
+#############
+
+# Number Traits
+num-traits = "0.2.19"
+num-derive = "0.4.2"
+
+# PRNG
+rand = "0.9.2"
+rand_xoshiro = "0.7.0"
+rand_distr = "0.5.1"
+
+# N-dimensional arrays
+ndarray = { version = "0.17.1", features = ["rayon", "serde"] }
+ndarray-stats = "0.6.0"
+ndarray-rand = "0.16.0"
+
+# # Linear Algebra
+# faer = "0.23.2"
+
+# # DataFrames
+# polars = { version = "0.52.0", features = [
+#     # "lazy",
+#     # "nightly",
+#     # "performant",
+#     "ndarray",
+#     "serde",
+# ] }
+
+###########
+# Data IO #
+###########
+
+# # Data Serialization
+# serde = { version = "1.0.228", features = ["derive"] }
+# ciborium = "0.2.2"
+# csv = "1.4.0"
+
+# # Data compression
+# flate2 = "1.1.5"
+
+[dev-dependencies]
+
+###########
+# Testing #
+###########
+
+# # Property testing framework
+# proptest = "1.9.0"
+
+# # Test fixtures
+rstest = "0.26.1"
+
+################
+# Benchmarking #
+################
+
+# # Statistics-driven micro-benchmarking
+criterion = { version = "0.7.0", features = ["html_reports"] }
+
+# # Optimize faer development builds
+# [profile.dev.package.faer]
+# opt-level = 3
