@@ -15,7 +15,10 @@ pub mod spin;
 pub mod state;
 
 /// Spin System
-pub trait SpinSystem: HamiltonianSystem {
+pub trait SpinSystem:
+    HamiltonianSystem
+    + SpinState<Spin = <Self::State as SpinState>::Spin, Index = <Self::State as SpinState>::Index>
+{
     /// Underlying system state
     type State: SpinState;
 
@@ -36,7 +39,7 @@ pub trait SpinSystem: HamiltonianSystem {
     }
 }
 
-pub trait UpDownSymmetry: SpinSystem
+pub(crate) trait UpDownSymmetry: SpinSystem
 where
     Self::State: SpinState<Spin = SpinHalf>,
 {

@@ -1,6 +1,8 @@
 //! Ising Model
 //!
 
+use std::ops::{Index, IndexMut};
+
 use crate::{
     hamiltonian::HamiltonianSystem,
     spin_system::{SpinSystem, state::SpinState},
@@ -23,6 +25,20 @@ impl<S: SpinState> Ising<S> {
     }
 }
 
+impl<S: SpinState> Index<S::Index> for Ising<S> {
+    type Output = S::Spin;
+
+    fn index(&self, i: S::Index) -> &Self::Output {
+        &self.state[i]
+    }
+}
+
+impl<S: SpinState> IndexMut<S::Index> for Ising<S> {
+    fn index_mut(&mut self, i: S::Index) -> &mut Self::Output {
+        &mut self.state[i]
+    }
+}
+
 impl<S> HamiltonianSystem for Ising<S>
 where
     S: SpinState,
@@ -31,6 +47,55 @@ where
 
     fn hamiltonian(&self) -> Self::H {
         self.state().total_interaction()
+    }
+}
+
+impl<S> SpinState for Ising<S>
+where
+    S: SpinState,
+{
+    type Spin = S::Spin;
+
+    type Index = S::Index;
+
+    fn spin_count(&self) -> usize {
+        self.state.spin_count()
+    }
+
+    fn indices(&self) -> impl Iterator<Item = Self::Index> {
+        self.state.indices()
+    }
+
+    fn indexed_spins<'a>(&'a self) -> impl Iterator<Item = (Self::Index, &'a Self::Spin)>
+    where
+        Self::Spin: 'a,
+    {
+        self.state.indexed_spins()
+    }
+
+    fn indexed_spins_mut<'a>(
+        &'a mut self,
+    ) -> impl Iterator<Item = (Self::Index, &'a mut Self::Spin)>
+    where
+        Self::Spin: 'a,
+    {
+        self.state.indexed_spins_mut()
+    }
+
+    fn total_magnet(&self) -> i32 {
+        self.state.total_magnet()
+    }
+
+    fn nn_sum(&self, i: Self::Index) -> i32 {
+        self.state.nn_sum(i)
+    }
+
+    fn interaction(&self, i: Self::Index) -> i32 {
+        self.state.interaction(i)
+    }
+
+    fn total_interaction(&self) -> i32 {
+        self.state.total_interaction()
     }
 }
 

@@ -11,9 +11,12 @@ use ndarray::{Array2, Axis};
 use rand::Rng;
 use rand_distr::Distribution;
 
-use crate::lattice::{
-    Lattice,
-    square_lattice::{SquareLattice, periodicity::Periodicity},
+use crate::{
+    hypercube_index,
+    lattice::{
+        Lattice,
+        square_lattice::{SquareLattice, periodicity::Periodicity},
+    },
 };
 
 /// 2D Square Lattice
@@ -70,11 +73,7 @@ impl<T> Lattice for SquareLattice2D<T> {
 
     #[inline(always)]
     fn indices(&self) -> impl Iterator<Item = Self::Index> {
-        (0..self.site_count()).map(|n| {
-            let i = n % self.length();
-            let j = n - (i * self.length());
-            [i, j]
-        })
+        (0..self.site_count()).map(|n| hypercube_index!(n, self.length(); i, j))
     }
 
     #[inline(always)]

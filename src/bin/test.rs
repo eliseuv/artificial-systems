@@ -1,5 +1,6 @@
 use artificial_systems::{
     lattice::{Lattice, square_lattice::impl_2d::SquareLattice2D},
+    mcmc::{MarkovChain, MetropolisSampler},
     spin_system::{
         SpinSystem,
         ising::Ising,
@@ -14,7 +15,7 @@ use rand_xoshiro::Xoshiro256PlusPlus;
 fn main() {
     let mut rng = Xoshiro256PlusPlus::from_os_rng();
     let mut init_spec = Paramagnetic::<SpinHalf, _>::with_rng(&mut rng);
-    let length = 32;
+    let length = 128;
     let lattice = SquareLattice2D::new(length, &mut init_spec);
     let ising = Ising::with_initial_state(lattice);
 
@@ -26,4 +27,12 @@ fn main() {
         m = ising.measure::<Magnetization>(),
         E = ising.measure::<TotalEnergy>()
     );
+
+    let beta = 1000.0;
+    let mut sampler = MetropolisSampler::with_system(ising, beta);
+    let n_steps = 8;
+    for _ in 0..n_steps {
+        sampler.step(&mut rng);
+        println!("{state}", state = sampler.system().state());
+    }
 }
