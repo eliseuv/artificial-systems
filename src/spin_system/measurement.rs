@@ -1,4 +1,4 @@
-use crate::spin_system::{SpinSystem, state::SpinState};
+use crate::spin_system::SpinSystem;
 
 /// Measurement over a spin system
 pub trait Measurement<S: SpinSystem> {
@@ -18,7 +18,7 @@ where
 
     #[inline(always)]
     fn measure(system: &S) -> Self::Result {
-        system.state().total_magnet()
+        system.total_magnet()
     }
 }
 
@@ -33,7 +33,7 @@ where
 
     #[inline(always)]
     fn measure(system: &S) -> Self::Result {
-        system.state().magnet()
+        system.magnet()
     }
 }
 

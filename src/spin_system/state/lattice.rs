@@ -1,4 +1,7 @@
-use std::ops::Neg;
+use std::{
+    fmt::Display,
+    ops::{Index, IndexMut, Neg},
+};
 
 use rand::Rng;
 use rand_distr::{Distribution, StandardUniform};
@@ -14,8 +17,24 @@ use crate::{
     },
 };
 
-/// Lattice Spin State
-impl<L> SpinState for L
+/// Lattice Spin State Wrapper
+pub struct LatticeSpinState<L: Lattice>(pub L);
+
+impl<L: Lattice> Index<L::Index> for LatticeSpinState<L> {
+    type Output = L::Site;
+
+    fn index(&self, i: L::Index) -> &Self::Output {
+        &self.0[i]
+    }
+}
+
+impl<L: Lattice> IndexMut<L::Index> for LatticeSpinState<L> {
+    fn index_mut(&mut self, i: L::Index) -> &mut Self::Output {
+        &mut self.0[i]
+    }
+}
+
+impl<L> SpinState for LatticeSpinState<L>
 where
     L: Lattice,
     L::Site: Spin,
@@ -26,12 +45,12 @@ where
 
     #[inline(always)]
     fn spin_count(&self) -> usize {
-        self.site_count()
+        self.0.site_count()
     }
 
     #[inline(always)]
     fn indices(&self) -> impl Iterator<Item = Self::Index> {
-        self.indices()
+        self.0.indices()
     }
 
     #[inline(always)]
@@ -39,7 +58,7 @@ where
     where
         Self::Spin: 'a,
     {
-        self.indexed_sites()
+        self.0.indexed_sites()
     }
 
     #[inline(always)]
@@ -49,17 +68,17 @@ where
     where
         Self::Spin: 'a,
     {
-        self.indexed_sites_mut()
+        self.0.indexed_sites_mut()
     }
 
     #[inline(always)]
     fn total_magnet(&self) -> i32 {
-        self.sites().map(|&s| s.into()).sum::<i32>()
+        self.0.sites().map(|&s| s.into()).sum::<i32>()
     }
 
     #[inline(always)]
     fn nn_sum(&self, i: Self::Index) -> i32 {
-        self.nearest_neighbors(i).map(|&s| s.into()).sum()
+        self.0.nearest_neighbors(i).map(|&s| s.into()).sum()
     }
 
     #[inline(always)]
@@ -71,7 +90,8 @@ where
 
     #[inline(always)]
     fn total_interaction(&self) -> i32 {
-        self.nearest_neighbors_pairs()
+        self.0
+            .nearest_neighbors_pairs()
             .map(|(&s_i, &s_j)| (s_i * s_j).into())
             .sum::<i32>()
             .neg()
@@ -97,5 +117,14 @@ where
 {
     fn reset(&mut self, lattice: &mut L) {
         RandomSites::with_dist(StandardUniform, self.rng).reset(lattice);
+    }
+}
+
+impl<L> Display for LatticeSpinState<L>
+where
+    L: Lattice + Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

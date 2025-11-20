@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::ops::Neg;
 use std::{mem::transmute, ops::Mul};
 
@@ -7,7 +8,7 @@ use rand_distr::{Distribution, StandardUniform};
 use crate::spin_system::spin::{Spin, SpinFlip};
 
 /// Spin-`1`
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(i32)]
 pub enum SpinOne {
     Down = -1,
@@ -15,15 +16,7 @@ pub enum SpinOne {
     Up = 1,
 }
 
-impl Spin for SpinOne {
-    fn char(&self) -> char {
-        match self {
-            SpinOne::Down => '↓',
-            SpinOne::Zero => '0',
-            SpinOne::Up => '↑',
-        }
-    }
-}
+impl Spin for SpinOne {}
 
 impl From<SpinOne> for i32 {
     fn from(value: SpinOne) -> Self {
@@ -36,6 +29,20 @@ impl Mul for SpinOne {
 
     fn mul(self, rhs: Self) -> Self::Output {
         unsafe { transmute((self as i32) * (rhs as i32)) }
+    }
+}
+
+impl Display for SpinOne {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                SpinOne::Down => '↓',
+                SpinOne::Zero => '0',
+                SpinOne::Up => '↑',
+            }
+        )
     }
 }
 

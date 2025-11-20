@@ -37,9 +37,9 @@ impl<T> IndexMut<usize> for SquareLattice1D<T> {
     }
 }
 
-impl<T> Distribution<usize> for SquareLattice1D<T> {
+impl<T> Distribution<<SquareLattice1D<T> as Lattice>::Index> for SquareLattice1D<T> {
     #[inline(always)]
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> <SquareLattice1D<T> as Lattice>::Index {
         rng.random_range(0..self.state.len())
     }
 }

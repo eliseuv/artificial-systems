@@ -2,6 +2,7 @@
 //!
 
 use std::{
+    fmt::Display,
     mem::MaybeUninit,
     ops::{Index, IndexMut},
 };
@@ -166,5 +167,21 @@ impl<T> SquareLattice<2> for SquareLattice2D<T> {
     #[inline(always)]
     fn length(&self) -> usize {
         self.state.len_of(Axis(0))
+    }
+}
+
+impl<T> Display for SquareLattice2D<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row in self.rows() {
+            writeln!(
+                f,
+                "{row_str}",
+                row_str = row.iter().map(|s| format!("{s}")).join(" ")
+            )?;
+        }
+        Ok(())
     }
 }

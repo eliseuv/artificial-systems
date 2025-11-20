@@ -1,8 +1,6 @@
 //! Spin Systems
 //!
 
-use std::ops::Index;
-
 use crate::{
     hamiltonian::HamiltonianSystem,
     spin_system::{measurement::Measurement, spin::spin_half::SpinHalf, state::SpinState},
@@ -22,11 +20,10 @@ pub trait SpinSystem:
     /// Underlying system state
     type State: SpinState;
 
-    /// Get reference to underlying system state
+    /// Reference to underlying state
     fn state(&self) -> &Self::State;
 
-    /// Get mutable reference to underlying system state
-    fn state_mut(&mut self) -> &mut Self::State;
+    fn to_state(self) -> Self::State;
 
     /// Perform a measurement over the system
     #[inline(always)]
@@ -53,8 +50,8 @@ where
     S::State: SpinState<Spin = SpinHalf>,
 {
     fn flip_energy(&self, i: <Self::State as SpinState>::Index) -> Self::H {
-        let s_i: i32 = (*self.state().index(i)).into();
-        let nn_sum = self.state().nn_sum(i);
+        let s_i = self[i] as i32;
+        let nn_sum = self.nn_sum(i);
         (2 * s_i * nn_sum).into()
     }
 }

@@ -43,7 +43,7 @@ impl<S: HamiltonianSystem> MetropolisSampler<S> {
         &self.system
     }
 
-    pub fn get_system(self) -> S {
+    pub fn to_system(self) -> S {
         self.system
     }
 }
@@ -58,14 +58,8 @@ where
     where
         R: Rng + ?Sized,
     {
-        let random_indices: Vec<_> = (0..self.system.state().spin_count())
-            .map(|_| {
-                self.system
-                    .state()
-                    .indices()
-                    .choose(rng)
-                    .expect("Empty spin state")
-            })
+        let random_indices: Vec<_> = (0..self.system.spin_count())
+            .map(|_| self.system.indices().choose(rng).expect("Empty spin state"))
             .collect();
         for i in random_indices {
             // Calculate flip energy

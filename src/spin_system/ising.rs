@@ -46,7 +46,22 @@ where
     type H = i32;
 
     fn hamiltonian(&self) -> Self::H {
-        self.state().total_interaction()
+        self.total_interaction()
+    }
+}
+
+impl<S> SpinSystem for Ising<S>
+where
+    S: SpinState,
+{
+    type State = S;
+
+    fn state(&self) -> &Self::State {
+        &self.state
+    }
+
+    fn to_state(self) -> Self::State {
+        self.state
     }
 }
 
@@ -96,22 +111,5 @@ where
 
     fn total_interaction(&self) -> i32 {
         self.state.total_interaction()
-    }
-}
-
-impl<S> SpinSystem for Ising<S>
-where
-    S: SpinState,
-{
-    type State = S;
-
-    #[inline(always)]
-    fn state(&self) -> &Self::State {
-        &self.state
-    }
-
-    #[inline(always)]
-    fn state_mut(&mut self) -> &mut Self::State {
-        &mut self.state
     }
 }
