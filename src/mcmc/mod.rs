@@ -11,20 +11,10 @@ use crate::{
 };
 
 /// Arbitrary Markov Chain
-pub trait MarkovChain {
-    fn step<R>(&mut self, rng: &mut R)
+pub trait MarkovChain<S> {
+    fn step<R>(&mut self, system: &mut S, rng: &mut R)
     where
         R: Rng + ?Sized;
-
-    fn advance<R>(&mut self, n_steps: usize, rng: &mut R)
-    where
-        R: Rng + ?Sized,
-    {
-        assert!(n_steps > 0, "Number of steps must be positive!");
-        for _t in 0..n_steps {
-            self.step(rng);
-        }
-    }
 }
 
 /// Metropolis Sampling

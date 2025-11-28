@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 
 # CLI Argument Parser
-clap = { version = "4.5.52", features = ["derive"] }
+clap = { version = "4.5.53", features = ["derive"] }
 
 # Iteration Tools
 itertools = "0.14.0"
@@ -60,13 +60,13 @@ ndarray-rand = "0.16.0"
 # Data IO #
 ###########
 
-# # Data Serialization
-# serde = { version = "1.0.228", features = ["derive"] }
-# ciborium = "0.2.2"
-# csv = "1.4.0"
+# Data Serialization
+serde = { version = "1.0.228", features = ["derive"] }
+ciborium = "0.2.2"
+csv = "1.4.0"
 
-# # Data compression
-# flate2 = "1.1.5"
+# Data compression
+flate2 = "1.1.5"
 
 [dev-dependencies]
 

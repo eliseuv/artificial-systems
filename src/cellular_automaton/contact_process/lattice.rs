@@ -5,8 +5,8 @@ use std::ops::{Index, IndexMut};
 
 use num_traits::Inv;
 use rand::Rng;
-use rand::seq::{IteratorRandom, SliceRandom};
-use rand_distr::Bernoulli;
+use rand::seq::{IndexedRandom, IteratorRandom, SliceRandom};
+use rand_distr::{Bernoulli, Distribution};
 
 use crate::cellular_automaton::contact_process::cell::Binary;
 use crate::{
@@ -116,43 +116,34 @@ where
     {
         M::measure(self)
     }
-    fn get_indices(&mut self) -> Vec<(L::Index, *mut Binary)> {
-        Lattice::indexed_sites_mut(&mut self.state)
-            .map(|(i, s)| (i, std::ptr::from_mut(s)))
-            .collect()
-    }
 
-    fn dynamics_sweep<R: Rng + ?Sized>(
-        &mut self,
-        indices: &mut [(L::Index, *mut Binary)],
-        rng: &mut R,
-    ) {
+    fn dynamics_sweep<R: Rng + ?Sized>(&mut self, indices: &mut [L::Index], rng: &mut R) {
         indices.shuffle(rng);
-        for &(i, s) in indices.iter() {
+        for &i in indices.iter() {
             // Update site based on its state
-            unsafe {
-                *s = match *s {
-                    Binary::Active => {
-                        // Test $\xi \in [0,1)$ against $1/\alpha$
-                        let xi: f64 = rng.random();
-                        match xi {
-                            xi if xi < self.rate_inv => Binary::Inactive,
-                            _ => Binary::Active,
-                        }
+            self.state[i] = match self.state[i] {
+                Binary::Active => {
+                    // Test $\xi \in [0,1)$ against $1/\alpha$
+                    let xi: f64 = rng.random();
+                    match xi {
+                        xi if xi < self.rate_inv => Binary::Inactive,
+                        _ => Binary::Active,
                     }
-                    // Copy state of random nearest neighbor
-                    Binary::Inactive => *self.state.nearest_neighbors(i).choose(rng).unwrap(),
                 }
+                // Copy state of random nearest neighbor
+                Binary::Inactive => *self.state.nearest_neighbors(i).choose(rng).unwrap(),
             }
         }
     }
 
-    fn apply_diffusion<R: Rng + ?Sized>(
-        &mut self,
-        indices: &mut [(L::Index, *mut Binary)],
-        rng: &mut R,
-    ) {
-        indices.shuffle(rng);
+    fn apply_diffusion<R: Rng + ?Sized>(&mut self, indices: &mut [L::Index], rng: &mut R) {
+        for _ in 0..self.site_count() {
+            if self.diff_coin.sample(rng) {
+                let i = *indices.choose(rng).expect("Empty indices vector");
+                let nn_idx = self.state.nearest_neighbors_indices(i).next().unwrap();
+                self.state.swap(i, nn_idx);
+            }
+        }
     }
 }
 
@@ -225,14 +216,16 @@ impl StochasticCellularAutomaton for ContactProcess1D {
     }
 
     fn step<R: Rng + ?Sized>(&mut self, rng: &mut R) {
-        let mut indices = self.get_indices();
+        let mut indices: Vec<_> = self.indices().collect();
         self.dynamics_sweep(&mut indices, rng);
+        self.apply_diffusion(&mut indices, rng);
     }
 
     fn advance<R: Rng + ?Sized>(&mut self, n_steps: usize, rng: &mut R) {
-        let mut indices = self.get_indices();
+        let mut indices: Vec<_> = self.indices().collect();
         for _ in 0..n_steps {
             self.dynamics_sweep(&mut indices, rng);
+            self.apply_diffusion(&mut indices, rng);
         }
     }
 
@@ -244,11 +237,12 @@ impl StochasticCellularAutomaton for ContactProcess1D {
     {
         assert!(n_steps > 0, "Number of steps must be positive!");
         let mut result = Vec::with_capacity(n_steps + 1);
-        let mut indices = self.get_indices();
+        let mut indices: Vec<_> = self.indices().collect();
 
         result.push(M::measure(self));
         for _ in 0..n_steps {
             self.dynamics_sweep(&mut indices, rng);
+            self.apply_diffusion(&mut indices, rng);
             result.push(M::measure(self));
         }
 
@@ -271,7 +265,7 @@ impl StochasticCellularAutomaton for ContactProcess1D {
         assert!(n_runs > 0, "Number of runs must be positive!");
         assert!(n_steps > 0, "Number of steps must be positive!");
         let mut result = Array2::uninit((n_runs, n_steps + 1));
-        let mut indices = self.get_indices();
+        let mut indices: Vec<_> = self.indices().collect();
 
         // Runs loop
         for n in 0..n_runs {
@@ -282,6 +276,7 @@ impl StochasticCellularAutomaton for ContactProcess1D {
             // Steps loop
             for t in 1..(n_steps + 1) {
                 self.dynamics_sweep(&mut indices, rng);
+                self.apply_diffusion(&mut indices, rng);
                 result[(n, t)].write(M::measure(self));
             }
         }

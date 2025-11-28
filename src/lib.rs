@@ -1,6 +1,9 @@
 //! Artificial Systems
 //!
 
+/// General Utilities
+pub mod utils;
+
 /// General maths utilities
 pub mod maths;
 pub(crate) use maths::hypercube_index;
@@ -22,3 +25,6 @@ pub mod cellular_automaton;
 
 /// Spin Systems
 pub mod spin_system;
+
+/// Data Files Interface
+pub mod data_io;
