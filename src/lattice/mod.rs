@@ -6,10 +6,10 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use crate::lattice::{initial_state::InitialStateSpec, measurement::Measurement};
-
-/// Initial lattice state specifications
-pub mod initial_state;
+use crate::{
+    lattice::initial_state::InitialStateSpec,
+    systems::{Measurement, StateResetSpec},
+};
 
 /// Arbitrary lattice
 pub trait Lattice:
@@ -51,6 +51,8 @@ pub trait Lattice:
     ) -> impl Iterator<Item = (Self::Index, &'a mut Self::Site)>
     where
         Self::Site: 'a;
+    /// Swap sites
+    fn swap(&mut self, i: Self::Index, j: Self::Index);
 
     /// Iterator over the indices of all nearest neighbors of a given site
     fn nearest_neighbors_indices(&self, idx: Self::Index) -> impl Iterator<Item = Self::Index>;
@@ -84,23 +86,24 @@ pub trait Lattice:
     fn reset<I>(&mut self, spec: &mut I)
     where
         Self: Sized,
-        I: InitialStateSpec<Self>,
+        I: StateResetSpec<Self>,
     {
         spec.reset(self)
     }
 
     /// Measurement on the lattice
     #[inline(always)]
-    fn measure<M: Measurement>(&self, measurement: &M) -> M::Result
+    fn measure<M>(&self) -> M::Result
     where
         Self: Sized,
+        M: Measurement<Self>,
     {
-        measurement.measure(self)
+        M::measure(self)
     }
 }
 
-/// Measurements over the lattice
-pub mod measurement;
+/// Initial lattice state specifications
+pub mod initial_state;
 
 /// Diffusion on the lattice
 pub mod diffusion;

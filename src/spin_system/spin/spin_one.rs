@@ -38,9 +38,9 @@ impl Display for SpinOne {
             f,
             "{}",
             match self {
-                SpinOne::Down => '↓',
-                SpinOne::Zero => '0',
-                SpinOne::Up => '↑',
+                Self::Down => '↓',
+                Self::Zero => '0',
+                Self::Up => '↑',
             }
         )
     }

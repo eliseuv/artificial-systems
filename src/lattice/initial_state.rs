@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use rand::Rng;
 use rand_distr::Distribution;
 
-use crate::lattice::Lattice;
+use crate::{lattice::Lattice, systems::StateResetSpec};
 
 /// Specification for an initial state of a lattice
 pub trait InitialStateSpec<L>
@@ -14,30 +14,35 @@ where
     L: Lattice,
 {
     /// Construct a new lattice according to specification
-    fn construct(&mut self, shape: L::Shape) -> L {
-        let mut lattice = unsafe { L::new_uninit(shape).assume_init() };
-
-        self.reset(&mut lattice);
-        lattice
-    }
-
-    /// Reset state of the lattice according to specification
-    fn reset(&mut self, lattice: &mut L);
+    fn construct(&mut self, shape: L::Shape) -> L;
 }
 
 /// Uniform initial state specification
 #[derive(Debug, Clone, Copy)]
 pub struct UniformSites<T: Copy>(pub T);
 
+impl<T, L> StateResetSpec<L> for UniformSites<T>
+where
+    T: Copy,
+    L: Lattice<Site = T>,
+{
+    fn reset(&mut self, system: &mut L) {
+        for s in system.sites_mut() {
+            *s = self.0;
+        }
+    }
+}
+
 impl<L, T> InitialStateSpec<L> for UniformSites<T>
 where
     T: Copy,
     L: Lattice<Site = T>,
 {
-    fn reset(&mut self, lattice: &mut L) {
-        for s in lattice.sites_mut() {
-            *s = self.0;
-        }
+    fn construct(&mut self, shape: <L as Lattice>::Shape) -> L {
+        let mut lattice = unsafe { L::new_uninit(shape).assume_init() };
+        self.reset(&mut lattice);
+
+        lattice
     }
 }
 
@@ -58,11 +63,28 @@ where
     D: Distribution<T>,
     R: Rng + ?Sized,
 {
+    /// New random sites lattice specification with a given distribution
     pub fn with_dist(dist: D, rng: &'a mut R) -> Self {
         Self {
             _site: PhantomData,
             dist,
             rng,
+        }
+    }
+}
+
+impl<'a, L, T, D, R> StateResetSpec<L> for RandomSites<'a, T, D, R>
+where
+    L: Lattice<Site = T>,
+    D: Distribution<T>,
+    R: Rng + ?Sized,
+{
+    fn reset(&mut self, system: &mut L) {
+        for (s, s_prime) in system
+            .sites_mut()
+            .zip((&mut self.rng).sample_iter(&self.dist))
+        {
+            *s = s_prime;
         }
     }
 }
@@ -73,12 +95,10 @@ where
     D: Distribution<T>,
     R: Rng + ?Sized,
 {
-    fn reset(&mut self, lattice: &mut L) {
-        for (s, s_prime) in lattice
-            .sites_mut()
-            .zip((&mut self.rng).sample_iter(&self.dist))
-        {
-            *s = s_prime;
-        }
+    fn construct(&mut self, shape: <L as Lattice>::Shape) -> L {
+        let mut lattice = unsafe { L::new_uninit(shape).assume_init() };
+        self.reset(&mut lattice);
+
+        lattice
     }
 }

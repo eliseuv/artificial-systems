@@ -73,14 +73,33 @@ where
 
     type Index = S::Index;
 
+    #[inline(always)]
     fn spin_count(&self) -> usize {
         self.state.spin_count()
     }
 
+    #[inline(always)]
     fn indices(&self) -> impl Iterator<Item = Self::Index> {
         self.state.indices()
     }
 
+    #[inline(always)]
+    fn spins<'a>(&'a self) -> impl Iterator<Item = &'a Self::Spin>
+    where
+        Self::Spin: 'a,
+    {
+        self.state.spins()
+    }
+
+    #[inline(always)]
+    fn spins_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Self::Spin>
+    where
+        Self::Spin: 'a,
+    {
+        self.state.spins_mut()
+    }
+
+    #[inline(always)]
     fn indexed_spins<'a>(&'a self) -> impl Iterator<Item = (Self::Index, &'a Self::Spin)>
     where
         Self::Spin: 'a,
@@ -88,6 +107,7 @@ where
         self.state.indexed_spins()
     }
 
+    #[inline(always)]
     fn indexed_spins_mut<'a>(
         &'a mut self,
     ) -> impl Iterator<Item = (Self::Index, &'a mut Self::Spin)>
@@ -97,18 +117,22 @@ where
         self.state.indexed_spins_mut()
     }
 
+    #[inline(always)]
     fn total_magnet(&self) -> i32 {
         self.state.total_magnet()
     }
 
+    #[inline(always)]
     fn nn_sum(&self, i: Self::Index) -> i32 {
         self.state.nn_sum(i)
     }
 
+    #[inline(always)]
     fn interaction(&self, i: Self::Index) -> i32 {
         self.state.interaction(i)
     }
 
+    #[inline(always)]
     fn total_interaction(&self) -> i32 {
         self.state.total_interaction()
     }

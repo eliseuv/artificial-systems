@@ -2,10 +2,12 @@
 //!
 //!
 use std::{
+    fmt::Display,
     mem::MaybeUninit,
     ops::{Index, IndexMut},
 };
 
+use itertools::Itertools as _;
 use rand::Rng;
 use rand_distr::Distribution;
 
@@ -95,6 +97,11 @@ impl<T> Lattice for SquareLattice1D<T> {
     }
 
     #[inline(always)]
+    fn swap(&mut self, i: Self::Index, j: Self::Index) {
+        self.state.swap(i, j);
+    }
+
+    #[inline(always)]
     fn nearest_neighbors_indices(&self, i: Self::Index) -> impl Iterator<Item = Self::Index> {
         [self.period.prev(i), self.period.next(i)].into_iter()
     }
@@ -135,5 +142,14 @@ impl<T> SquareLattice<1> for SquareLattice1D<T> {
     #[inline(always)]
     fn length(&self) -> usize {
         self.state.len()
+    }
+}
+
+impl<T> Display for SquareLattice1D<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.state.iter().map(|s| format!("{s}")).join(" "))
     }
 }

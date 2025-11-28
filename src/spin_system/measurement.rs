@@ -1,11 +1,4 @@
-use crate::spin_system::SpinSystem;
-
-/// Measurement over a spin system
-pub trait Measurement<S: SpinSystem> {
-    type Result;
-
-    fn measure(system: &S) -> Self::Result;
-}
+use crate::{spin_system::SpinSystem, systems::Measurement};
 
 /// Total Magnetization of the system
 pub struct TotalMagnetization;
@@ -34,20 +27,5 @@ where
     #[inline(always)]
     fn measure(system: &S) -> Self::Result {
         system.magnet()
-    }
-}
-
-/// Total system energy
-pub struct TotalEnergy;
-
-impl<S> Measurement<S> for TotalEnergy
-where
-    S: SpinSystem,
-{
-    type Result = S::H;
-
-    #[inline(always)]
-    fn measure(system: &S) -> Self::Result {
-        system.hamiltonian()
     }
 }

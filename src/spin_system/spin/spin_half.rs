@@ -49,10 +49,10 @@ impl Display for SpinHalf {
             f,
             "{}",
             match self {
-                // SpinHalf::Down => '↓',
-                // SpinHalf::Up => '↑',
-                SpinHalf::Down => ' ',
-                SpinHalf::Up => '█',
+                // Self::Down => '↓',
+                // Self::Up => '↑',
+                Self::Down => ' ',
+                Self::Up => '█',
             }
         )
     }

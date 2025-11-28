@@ -105,6 +105,11 @@ impl<T> Lattice for SquareLattice3D<T> {
     }
 
     #[inline(always)]
+    fn swap(&mut self, i: Self::Index, j: Self::Index) {
+        self.state.swap(i, j);
+    }
+
+    #[inline(always)]
     fn nearest_neighbors_indices(
         &self,
         [i, j, k]: Self::Index,
@@ -165,7 +170,7 @@ impl<T> Lattice for SquareLattice3D<T> {
     }
 }
 
-impl<T> SquareLattice<2> for SquareLattice3D<T> {
+impl<T> SquareLattice<3> for SquareLattice3D<T> {
     #[inline(always)]
     fn length(&self) -> usize {
         self.state.len_of(Axis(0))

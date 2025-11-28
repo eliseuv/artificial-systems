@@ -7,8 +7,9 @@ use std::{
 };
 
 use rand::Rng;
+use rand_distr::{Distribution, StandardUniform};
 
-use crate::spin_system::spin::Spin;
+use crate::{spin_system::spin::Spin, systems::StateResetSpec};
 
 /// Spin States
 pub trait SpinState:
@@ -26,6 +27,16 @@ pub trait SpinState:
     /// Iterator over all indices of the spins
     fn indices(&self) -> impl Iterator<Item = Self::Index>;
 
+    /// Iterator over all spins
+    fn spins<'a>(&'a self) -> impl Iterator<Item = &'a Self::Spin>
+    where
+        Self::Spin: 'a;
+
+    /// Mutable iterator over all spins
+    fn spins_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Self::Spin>
+    where
+        Self::Spin: 'a;
+
     /// Iterator over indices and spins pairs
     fn indexed_spins<'a>(&'a self) -> impl Iterator<Item = (Self::Index, &'a Self::Spin)>
     where
@@ -39,7 +50,10 @@ pub trait SpinState:
         Self::Spin: 'a;
 
     /// Total magnetization
-    fn total_magnet(&self) -> i32;
+    #[inline(always)]
+    fn total_magnet(&self) -> i32 {
+        self.spins().map(|&s| s.into()).sum()
+    }
 
     /// Magnetization
     #[inline(always)]
@@ -59,14 +73,21 @@ pub trait SpinState:
     fn total_interaction(&self) -> i32;
 }
 
-/// Specification of spin state configuration
-pub trait SpinStateSpec {}
-
 /// Ferromagnetic (ordered) spin configuration
 #[derive(Debug, Clone, Copy)]
 pub struct Ferromagnetic<T: Spin>(pub T);
 
-impl<T> SpinStateSpec for Ferromagnetic<T> where T: Spin {}
+impl<S, T> StateResetSpec<S> for Ferromagnetic<T>
+where
+    T: Spin,
+    S: SpinState<Spin = T>,
+{
+    fn reset(&mut self, system: &mut S) {
+        for s in system.spins_mut() {
+            *s = self.0
+        }
+    }
+}
 
 /// Paramagentic (disordered) spin configuration
 pub struct Paramagnetic<'a, T, R>
@@ -78,13 +99,6 @@ where
     rng: &'a mut R,
 }
 
-impl<'a, T, R> SpinStateSpec for Paramagnetic<'a, T, R>
-where
-    T: Spin,
-    R: Rng + ?Sized,
-{
-}
-
 impl<'a, T, R> Paramagnetic<'a, T, R>
 where
     T: Spin,
@@ -94,6 +108,23 @@ where
         Self {
             _spin: PhantomData,
             rng,
+        }
+    }
+}
+
+impl<'a, S, T, R> StateResetSpec<S> for Paramagnetic<'a, T, R>
+where
+    T: Spin,
+    S: SpinState<Spin = T>,
+    R: Rng + ?Sized,
+    StandardUniform: Distribution<T>,
+{
+    fn reset(&mut self, system: &mut S) {
+        for (s, s_prime) in system
+            .spins_mut()
+            .zip(self.rng.sample_iter(StandardUniform))
+        {
+            *s = s_prime;
         }
     }
 }

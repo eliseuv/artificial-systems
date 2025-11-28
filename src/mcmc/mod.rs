@@ -1,16 +1,17 @@
 //! Markov Chain Monte Carlo
 //!
 
-use rand::{Rng, seq::IteratorRandom};
+use ndarray::Array2;
+use num_traits::Inv;
+use rand::Rng;
 
 use crate::{
     hamiltonian::HamiltonianSystem,
-    spin_system::{SpinSystem, UpDownSymmetry, spin::spin_half::SpinHalf, state::SpinState},
+    systems::{Measurement, StateResetSpec},
 };
 
 /// Arbitrary Markov Chain
 pub trait MarkovChain {
-    /// A
     fn step<R>(&mut self, rng: &mut R)
     where
         R: Rng + ?Sized;
@@ -26,49 +27,59 @@ pub trait MarkovChain {
     }
 }
 
-pub struct MetropolisSampler<S: HamiltonianSystem> {
-    minus_beta: f64,
-    system: S,
-}
+/// Metropolis Sampling
+pub trait MetropolisSampling<S: HamiltonianSystem> {
+    fn step<R: Rng + ?Sized>(&self, system: &mut S, rng: &mut R);
 
-impl<S: HamiltonianSystem> MetropolisSampler<S> {
-    pub fn with_system(system: S, beta: f64) -> Self {
-        Self {
-            minus_beta: -beta,
-            system,
-        }
-    }
-    /// Reference to inner system
-    pub fn system(&self) -> &S {
-        &self.system
-    }
+    fn advance<R: Rng + ?Sized>(&self, system: &mut S, n_steps: usize, rng: &mut R);
 
-    pub fn to_system(self) -> S {
-        self.system
-    }
-}
-
-impl<S> MarkovChain for MetropolisSampler<S>
-where
-    S: SpinSystem,
-    S::State: SpinState<Spin = SpinHalf>,
-    S::H: Into<f64>,
-{
-    fn step<R>(&mut self, rng: &mut R)
+    fn sample<M, R>(&self, system: &mut S, n_steps: usize, rng: &mut R) -> Vec<M::Result>
     where
-        R: Rng + ?Sized,
-    {
-        let random_indices: Vec<_> = (0..self.system.spin_count())
-            .map(|_| self.system.indices().choose(rng).expect("Empty spin state"))
-            .collect();
-        for i in random_indices {
-            // Calculate flip energy
-            let dh = self.system.flip_energy(i).into();
-            // Metropolis prescription
-            if dh <= 0f64 || f64::exp(self.minus_beta * dh) > rng.random() {
-                // Flip
-                self.system[i] = self.system[i].flipped();
-            }
-        }
+        M: Measurement<S>,
+        R: Rng + ?Sized;
+
+    fn sample_multiple<M, U, R>(
+        &self,
+        system: &mut S,
+        n_steps: usize,
+        n_runs: usize,
+        reset_spec: U,
+        rng: &mut R,
+    ) -> Array2<M::Result>
+    where
+        M: Measurement<S>,
+        U: StateResetSpec<S>,
+        R: Rng + ?Sized;
+}
+
+/// Metropolis Sampler
+pub struct MetropolisSampler {
+    pub(crate) minus_beta: f64,
+}
+
+impl MetropolisSampler {
+    pub fn with_beta(beta: f64) -> Self {
+        Self { minus_beta: -beta }
+    }
+
+    pub fn with_temperature(temperature: f64) -> Self {
+        let beta = temperature.inv();
+        Self::with_beta(beta)
+    }
+
+    pub fn set_beta(&mut self, beta: f64) {
+        self.minus_beta = -beta
+    }
+
+    pub fn set_temperature(&mut self, temperature: f64) {
+        self.set_beta(temperature.inv())
+    }
+
+    pub fn beta(&self) -> f64 {
+        -self.minus_beta
+    }
+
+    pub fn temperature(&self) -> f64 {
+        self.beta().inv()
     }
 }

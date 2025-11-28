@@ -112,6 +112,11 @@ impl<T> Lattice for SquareLattice2D<T> {
     }
 
     #[inline(always)]
+    fn swap(&mut self, i: Self::Index, j: Self::Index) {
+        self.state.swap(i, j);
+    }
+
+    #[inline(always)]
     fn nearest_neighbors_indices(&self, [i, j]: Self::Index) -> impl Iterator<Item = Self::Index> {
         [
             [i, self.period.prev(j)],

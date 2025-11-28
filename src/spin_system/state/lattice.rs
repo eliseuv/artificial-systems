@@ -54,6 +54,22 @@ where
     }
 
     #[inline(always)]
+    fn spins<'a>(&'a self) -> impl Iterator<Item = &'a Self::Spin>
+    where
+        Self::Spin: 'a,
+    {
+        self.0.sites()
+    }
+
+    #[inline(always)]
+    fn spins_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Self::Spin>
+    where
+        Self::Spin: 'a,
+    {
+        self.0.sites_mut()
+    }
+
+    #[inline(always)]
     fn indexed_spins<'a>(&'a self) -> impl Iterator<Item = (Self::Index, &'a Self::Spin)>
     where
         Self::Spin: 'a,
@@ -103,8 +119,8 @@ where
     T: Spin,
     L: Lattice<Site = T>,
 {
-    fn reset(&mut self, lattice: &mut L) {
-        UniformSites(self.0).reset(lattice);
+    fn construct(&mut self, shape: <L as Lattice>::Shape) -> L {
+        UniformSites(self.0).construct(shape)
     }
 }
 
@@ -115,8 +131,8 @@ where
     R: Rng + ?Sized,
     StandardUniform: Distribution<T>,
 {
-    fn reset(&mut self, lattice: &mut L) {
-        RandomSites::with_dist(StandardUniform, self.rng).reset(lattice);
+    fn construct(&mut self, shape: <L as Lattice>::Shape) -> L {
+        RandomSites::with_dist(StandardUniform, self.rng).construct(shape)
     }
 }
 

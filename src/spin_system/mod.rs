@@ -3,7 +3,8 @@
 
 use crate::{
     hamiltonian::HamiltonianSystem,
-    spin_system::{measurement::Measurement, spin::spin_half::SpinHalf, state::SpinState},
+    spin_system::{spin::spin_half::SpinHalf, state::SpinState},
+    systems::Measurement,
 };
 
 /// Single spins states
@@ -23,6 +24,7 @@ pub trait SpinSystem:
     /// Reference to underlying state
     fn state(&self) -> &Self::State;
 
+    /// Get underlying state
     fn to_state(self) -> Self::State;
 
     /// Perform a measurement over the system
@@ -36,15 +38,15 @@ pub trait SpinSystem:
     }
 }
 
-pub(crate) trait UpDownSymmetry: SpinSystem
+pub(crate) trait SpinHalfSystem: SpinSystem
 where
-    Self::State: SpinState<Spin = SpinHalf>,
+    <Self as SpinSystem>::State: SpinState<Spin = SpinHalf>,
 {
     /// Energy difference of single spin flip
     fn flip_energy(&self, i: <Self::State as SpinState>::Index) -> Self::H;
 }
 
-impl<S> UpDownSymmetry for S
+impl<S> SpinHalfSystem for S
 where
     S: SpinSystem,
     S::State: SpinState<Spin = SpinHalf>,
@@ -58,6 +60,9 @@ where
 
 /// Measurements over spin systems
 pub mod measurement;
+
+/// Sampling of spin systems
+pub mod sampling;
 
 /// Ising Model
 pub mod ising;
