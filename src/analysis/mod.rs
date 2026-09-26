@@ -85,6 +85,18 @@ pub fn standardize_rows(
     Ok(())
 }
 
+/// Parallelism of a single faer operation.
+///
+/// Parallel only outside rayon workers: the ensemble routines already analyse one matrix per
+/// worker, and nesting faer's parallelism inside them would oversubscribe the pool.
+fn linalg_par() -> Par {
+    #[cfg(feature = "parallel-linalg")]
+    if rayon::current_thread_index().is_none() {
+        return Par::rayon(0);
+    }
+    Par::Seq
+}
+
 /// Correlation matrix `G = X Xᵀ / n_steps` of (standardised) series in the rows of `x`.
 pub fn correlation_matrix(x: ArrayView2<f64>) -> Array2<f64> {
     let (n_samples, n_steps) = x.dim();
@@ -98,7 +110,7 @@ pub fn correlation_matrix(x: ArrayView2<f64>) -> Array2<f64> {
         x,
         x.transpose(),
         1.0 / n_steps as f64,
-        Par::Seq,
+        linalg_par(),
     );
     Array2::from_shape_fn((n_samples, n_samples), |(i, j)| {
         // Exact symmetry regardless of accumulation order
@@ -113,7 +125,7 @@ pub fn eigenvalues(g: ArrayView2<f64>) -> Result<Vec<f64>, AnalysisError> {
     let g = g.as_standard_layout();
     let a = MatRef::from_row_major_slice(g.as_slice().expect("standard layout"), n, n);
     let mut s = Diag::<f64>::zeros(n);
-    let par = Par::Seq;
+    let par = linalg_par();
     let mut buffer = MemBuffer::new(self_adjoint_evd_scratch::<f64>(
         n,
         ComputeEigenvectors::No,
@@ -203,6 +215,25 @@ mod tests {
         let eig = eigenvalues(g.view()).unwrap();
         approx::assert_relative_eq!(eig[0], 1.0, epsilon = 1e-12);
         approx::assert_relative_eq!(eig[1], 3.0, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn spectrum_independent_of_calling_thread() {
+        use rayon::prelude::*;
+        let mut rng = stream(2, &[]);
+        let x = Array2::from_shape_fn((300, 600), |_| rng.sample::<f64, _>(StandardNormal));
+        let spectrum = || correlation_spectrum(x.view(), 0, ZeroVariance::Zero).unwrap();
+        let outside = spectrum();
+        let inside = (0..2)
+            .into_par_iter()
+            .map(|_| spectrum())
+            .collect::<Vec<_>>();
+        assert!(rayon::current_thread_index().is_none());
+        for spectrum in inside {
+            for (a, b) in outside.iter().zip(&spectrum) {
+                approx::assert_relative_eq!(a, b, epsilon = 1e-10, max_relative = 1e-10);
+            }
+        }
     }
 
     #[test]
