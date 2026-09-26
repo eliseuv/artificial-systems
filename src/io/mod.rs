@@ -58,7 +58,7 @@ pub enum Format {
     /// Concise Binary Object Representation.
     #[default]
     Cbor,
-    /// JSON.
+    /// JSON (non-finite numbers, e.g. `β = ∞`, are written as `null`).
     Json,
     /// Comma separated values (numeric matrices only).
     Csv,

@@ -334,6 +334,15 @@ where
     if spectrum && series.n_samples < 2 {
         bail!("Spectral analysis needs --n-samples >= 2");
     }
+    if output.format == Format::Csv
+        && (output.emit == Emit::All
+            || output.correlations
+            || (output.emit == Emit::TsMatrix && series.n_runs > 1))
+    {
+        bail!(
+            "CSV output holds a single matrix: use --emit spectrum, or --emit ts-matrix with --n-runs 1"
+        );
+    }
     info!(
         "Simulating {} run(s) of {} sample(s) x {} steps (seed {})",
         series.n_runs,
@@ -416,7 +425,7 @@ where
             .time_series_matrix
             .as_ref()
             .or(payload.eigenvalues.as_ref())
-            .context("CSV output holds a single matrix: use --n-runs 1 or --emit spectrum")?;
+            .context("no matrix to write")?;
         file.write_csv(primary)?;
         let meta = DataFile::new(file.path().with_extension("meta"), Format::Json, false);
         meta.write(&Payload {
