@@ -125,11 +125,11 @@ impl Flip for SpinOne {
 
 /// State `q ∈ {0, …, Q-1}` of a `Q`-state Potts model.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Potts<const Q: usize>(u8);
+pub struct PottsState<const Q: usize>(u8);
 
 /// State `q ∈ {0, …, Q-1}` of a `Q`-state clock model, pointing at angle `θ_q = 2πq/Q`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Clock<const Q: usize>(u8);
+pub struct ClockState<const Q: usize>(u8);
 
 macro_rules! impl_q_state {
     ($ty:ident) => {
@@ -173,10 +173,10 @@ macro_rules! impl_q_state {
     };
 }
 
-impl_q_state!(Potts);
-impl_q_state!(Clock);
+impl_q_state!(PottsState);
+impl_q_state!(ClockState);
 
-impl<const Q: usize> Clock<Q> {
+impl<const Q: usize> ClockState<Q> {
     /// Angle `θ_q = 2πq/Q`.
     #[inline]
     pub fn angle(self) -> f64 {
@@ -302,7 +302,7 @@ impl Display for Brass {
     }
 }
 
-impl<const Q: usize> Display for Potts<Q> {
+impl<const Q: usize> Display for PottsState<Q> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -312,7 +312,7 @@ impl<const Q: usize> Display for Potts<Q> {
     }
 }
 
-impl<const Q: usize> Display for Clock<Q> {
+impl<const Q: usize> Display for ClockState<Q> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -338,9 +338,9 @@ mod tests {
     fn indices_are_consistent() {
         check_indices::<SpinHalf>();
         check_indices::<SpinOne>();
-        check_indices::<Potts<3>>();
-        check_indices::<Potts<256>>();
-        check_indices::<Clock<6>>();
+        check_indices::<PottsState<3>>();
+        check_indices::<PottsState<256>>();
+        check_indices::<ClockState<6>>();
         check_indices::<Binary>();
         check_indices::<Brass>();
     }
@@ -360,7 +360,7 @@ mod tests {
 
     #[test]
     fn clock_angles() {
-        assert_eq!(Clock::<4>::new(0).angle(), 0.0);
-        approx::assert_relative_eq!(Clock::<4>::new(1).angle(), std::f64::consts::FRAC_PI_2);
+        assert_eq!(ClockState::<4>::new(0).angle(), 0.0);
+        approx::assert_relative_eq!(ClockState::<4>::new(1).angle(), std::f64::consts::FRAC_PI_2);
     }
 }

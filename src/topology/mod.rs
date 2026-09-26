@@ -118,17 +118,7 @@ impl Adjacency {
                 assert_ne!(j as usize, i, "Self loop at site {i}");
             }
         }
-        debug_assert!(
-            (0..n).all(|i| lists[i].iter().all(|&j| {
-                let forward = lists[i].iter().filter(|&&k| k == j).count();
-                let backward = lists[j as usize]
-                    .iter()
-                    .filter(|&&k| k as usize == i)
-                    .count();
-                forward == backward
-            })),
-            "Neighbour lists are not symmetric"
-        );
+        debug_assert!(is_symmetric(&lists), "Neighbour lists are not symmetric");
         let max_degree = lists.iter().map(Vec::len).max().unwrap_or(0);
         let regular = lists.iter().all(|l| l.len() == max_degree);
         let offsets = if regular {
@@ -185,9 +175,30 @@ impl Adjacency {
     }
 }
 
+/// Whether every directed pair `(i, j)` appears as often as `(j, i)`.
+fn is_symmetric(lists: &[Vec<u32>]) -> bool {
+    let mut forward: Vec<(u32, u32)> = Vec::new();
+    let mut backward: Vec<(u32, u32)> = Vec::new();
+    for (i, list) in lists.iter().enumerate() {
+        for &j in list {
+            forward.push((i as u32, j));
+            backward.push((j, i as u32));
+        }
+    }
+    forward.sort_unstable();
+    backward.sort_unstable();
+    forward == backward
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn symmetry_check() {
+        assert!(is_symmetric(&[vec![1, 1], vec![0, 0]]));
+        assert!(!is_symmetric(&[vec![1, 1], vec![0]]));
+    }
 
     #[test]
     fn adjacency_regular_and_irregular() {
