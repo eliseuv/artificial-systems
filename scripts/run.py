@@ -1,32 +1,39 @@
+"""Queue contact process spectra over a grid of infection rates and diffusion probabilities."""
+
 import os
+
 import numpy as np
 
-
 LENGTH = 128
-ALPHA_CRIT = 3.29785
-N_STEPS = 512
-N_SAMPLES = 100_000
+N_STEPS = 500
+N_SAMPLES = 100
+N_RUNS = 1000
+OUTPUT_DIR = "data/contact_process/1d/all_active"
 
-BASE_COMMAND = "cargo run --bin contact_process_1d --release --"
+BASE_COMMAND = "cargo run --release --bin artsys --"
 
-rate_vals = np.linspace(1, 6, 101)
-diffusion_vals = [0.6, 0.7, 0.8, 0.9, 1.0]
-# diffusion_vals = np.linspace(0, 1, 11)
+alpha_vals = np.linspace(1, 6, 101)
+gamma_vals = [0.6, 0.7, 0.8, 0.9, 1.0]
 
-for rate in rate_vals:
-    for diffusion in diffusion_vals:
-        output = f"data/contact_process/new/contact-process-1d-diffusion_L={LENGTH}_rate={rate:.8}_diffusion={diffusion:.8}_n_steps={N_STEPS}_n_samples={N_SAMPLES}"
-        cargo_command = " ".join(
+for alpha in alpha_vals:
+    for gamma in gamma_vals:
+        artsys_command = " ".join(
             [
                 BASE_COMMAND,
+                "contact-process",
+                "--dim 1",
                 f"--length {LENGTH}",
+                f"--alpha {alpha}",
+                f"--gamma {gamma}",
+                "--init all-active",
                 f"--n-steps {N_STEPS}",
                 f"--n-samples {N_SAMPLES}",
-                f"--rate {rate}",
-                f"--diffusion {diffusion}",
-                f"--output {output}",
+                f"--n-runs {N_RUNS}",
+                "--emit spectrum",
+                f"--dir {OUTPUT_DIR}",
+                "--no-overwrite",
             ]
         )
-        command = f"pueue add {cargo_command}"
-        os.system(f""" echo "{command}" """)
+        command = f"pueue add -- {artsys_command}"
+        print(command)
         os.system(command)
