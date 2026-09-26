@@ -8,9 +8,12 @@ license = "GPL-3.0-or-later"
 keywords = ["physics", "simulation", "monte-carlo", "ising", "cellular-automata"]
 
 [features]
-default = ["analysis", "cli"]
+default = ["analysis", "parallel-linalg", "cli"]
 # Random matrix analysis of time series matrices (eigenvalues via faer)
 analysis = ["dep:faer"]
+# Parallelism inside a single matrix product or eigendecomposition. Off for wasm32, where faer's
+# thread pool does not build.
+parallel-linalg = ["analysis", "faer/rayon"]
 # `artsys` command line interface
 cli = ["dep:clap", "dep:anyhow", "dep:colog"]
 
@@ -20,7 +23,7 @@ rand_xoshiro = "0.8"
 rand_distr = "0.6"
 rayon = "1.12"
 ndarray = { version = "0.17", features = ["serde"] }
-faer = { version = "0.24", optional = true }
+faer = { version = "0.24", optional = true, default-features = false, features = ["std"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 ciborium = "0.2"
