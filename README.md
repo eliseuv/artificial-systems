@@ -3,7 +3,8 @@
 High performance simulations of artificial systems in Rust: lattice and mean-field spin models,
 stochastic cellular automata, ensembles of their time series, and the random matrix analysis of
 the resulting time series matrices (spectra of Wishart correlation matrices), as used in the
-thesis *Examining Criticality through Random Matrices across Various Universality Classes*.
+thesis *Random matrices approaches for correlated time series: statistical physics and other
+applications*.
 
 ## Contents
 
