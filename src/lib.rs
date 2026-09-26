@@ -5,4 +5,6 @@
 //! of the resulting time series matrices.
 
 pub mod rng;
+pub mod site;
+pub mod state;
 pub mod topology;

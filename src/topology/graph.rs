@@ -18,7 +18,10 @@ impl Graph {
     pub fn from_edges(n: usize, edges: impl IntoIterator<Item = (usize, usize)>) -> Self {
         let mut lists = vec![Vec::new(); n];
         for (i, j) in edges {
-            assert!(i < n && j < n, "Edge ({i}, {j}) out of range for {n} vertices");
+            assert!(
+                i < n && j < n,
+                "Edge ({i}, {j}) out of range for {n} vertices"
+            );
             assert_ne!(i, j, "Self loop at vertex {i}");
             lists[i].push(j as u32);
             lists[j].push(i as u32);

@@ -108,7 +108,10 @@ impl Adjacency {
     /// itself or the lists are not symmetric.
     pub fn from_lists(lists: Vec<Vec<u32>>) -> Self {
         let n = lists.len();
-        assert!(u32::try_from(n).is_ok(), "Too many sites for u32 indices: {n}");
+        assert!(
+            u32::try_from(n).is_ok(),
+            "Too many sites for u32 indices: {n}"
+        );
         for (i, list) in lists.iter().enumerate() {
             for &j in list {
                 assert!((j as usize) < n, "Neighbour {j} of site {i} out of range");
@@ -118,7 +121,10 @@ impl Adjacency {
         debug_assert!(
             (0..n).all(|i| lists[i].iter().all(|&j| {
                 let forward = lists[i].iter().filter(|&&k| k == j).count();
-                let backward = lists[j as usize].iter().filter(|&&k| k as usize == i).count();
+                let backward = lists[j as usize]
+                    .iter()
+                    .filter(|&&k| k as usize == i)
+                    .count();
                 forward == backward
             })),
             "Neighbour lists are not symmetric"
