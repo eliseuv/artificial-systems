@@ -4,6 +4,7 @@
 //! stochastic cellular automata, ensemble time series generation and random matrix analysis
 //! of the resulting time series matrices.
 
+pub mod automaton;
 pub mod dynamics;
 pub mod ensemble;
 pub mod model;
