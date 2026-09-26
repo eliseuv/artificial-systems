@@ -10,6 +10,7 @@ pub mod automaton;
 pub mod constants;
 pub mod dynamics;
 pub mod ensemble;
+pub mod io;
 pub mod model;
 pub mod observable;
 pub mod rng;
