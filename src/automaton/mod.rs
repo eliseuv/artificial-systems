@@ -22,7 +22,7 @@ use crate::{
 
 mod rules;
 
-pub use rules::{BrassRule, ContactRule, Elementary, TotalisticBinary};
+pub use rules::{BrassRule, ContactRule, Elementary, LifeLike, TotalisticBinary};
 
 /// Stochastic local update rule.
 pub trait LocalRule<S: Site>: Clone + Send + Sync {

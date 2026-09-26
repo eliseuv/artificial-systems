@@ -150,6 +150,55 @@ impl LocalRule<Binary> for Elementary {
     }
 }
 
+/// Life-like outer totalistic rule (deterministic): an inactive site becomes active when its
+/// number of active neighbours `k` has bit `k` set in `birth`, an active site stays active when
+/// bit `k` is set in `survival`.
+///
+/// Conway's Game of Life (B3/S23, [`LifeLike::conway`]) runs on a
+/// [`Moore`](crate::topology::Moore) lattice.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LifeLike {
+    /// Neighbour counts that activate an inactive site, as a bitmask.
+    pub birth: u16,
+    /// Neighbour counts that keep an active site active, as a bitmask.
+    pub survival: u16,
+}
+
+impl LifeLike {
+    /// Conway's Game of Life, B3/S23.
+    pub const fn conway() -> Self {
+        Self {
+            birth: 1 << 3,
+            survival: (1 << 2) | (1 << 3),
+        }
+    }
+}
+
+impl LocalRule<Binary> for LifeLike {
+    #[inline(always)]
+    fn apply<R: Rng + ?Sized>(
+        &self,
+        current: Binary,
+        sites: &[Binary],
+        neighbors: &[u32],
+        _rng: &mut R,
+    ) -> Binary {
+        let k = neighbors
+            .iter()
+            .filter(|&&j| sites[j as usize].is_active())
+            .count();
+        let mask = match current {
+            Binary::Active => self.survival,
+            Binary::Inactive => self.birth,
+        };
+        Binary::from(k < 16 && mask & (1 << k) != 0)
+    }
+
+    fn is_absorbing(&self, counts: &[u32]) -> bool {
+        self.birth & 1 == 0 && counts[Binary::Active.index()] == 0
+    }
+}
+
 /// Brass immune network automaton (Tomé & Drugowich de Felício).
 ///
 /// With `σ = sign(Σⱼ sⱼ)` over the neighbours (`TH1 = +1`, `TH2 = -1`):
@@ -228,7 +277,7 @@ mod tests {
         dynamics::Dynamics,
         rng::stream,
         state::{Configuration, Init, LatticeState, Position, Prepare},
-        topology::Chain,
+        topology::{Chain, Moore},
     };
 
     fn binomial_odd(n: usize, k: usize) -> bool {
@@ -309,5 +358,41 @@ mod tests {
             .filter(|_| rule.apply(Brass::TH0, &sites, &[1, 3], &mut rng) == Brass::TH1)
             .count();
         assert!((tie as f64 / 10_000.0 - 0.5).abs() < 0.02);
+    }
+
+    fn life_cells(st: &LatticeState<Binary, Moore>) -> Vec<[usize; 2]> {
+        let top = st.topology().clone();
+        (0..st.len())
+            .filter(|&i| st.get(i).is_active())
+            .map(|i| top.coords(i))
+            .collect()
+    }
+
+    fn life_lattice(cells: &[[usize; 2]]) -> LatticeState<Binary, Moore> {
+        let top = Arc::new(Moore::periodic([6, 6]));
+        let mut st = LatticeState::uniform(top.clone(), Binary::Inactive);
+        for &c in cells {
+            st.set(top.index(c), Binary::Active);
+        }
+        st
+    }
+
+    #[test]
+    fn conway_blinker_oscillates_and_block_is_still() {
+        let mut rng = stream(6, &[]);
+        let mut life = Synchronous::new(LifeLike::conway());
+        let horizontal = [[2, 1], [2, 2], [2, 3]];
+        let mut st = life_lattice(&horizontal);
+        life.step(&mut st, &mut rng);
+        assert_eq!(life_cells(&st), [[1, 2], [2, 2], [3, 2]]);
+        life.step(&mut st, &mut rng);
+        assert_eq!(life_cells(&st), horizontal);
+
+        let block = [[0, 0], [0, 5], [5, 0], [5, 5]];
+        let mut st = life_lattice(&block);
+        life.step(&mut st, &mut rng);
+        assert_eq!(life_cells(&st), block, "block wrapped across the corners");
+        st.fill(Binary::Inactive);
+        assert!(life.is_frozen(&st));
     }
 }
