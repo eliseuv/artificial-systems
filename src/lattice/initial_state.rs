@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use rand::Rng;
 use rand_distr::Distribution;
 
-use crate::{lattice::Lattice, systems::StateResetSpec};
+use crate::{lattice::Lattice, method::SystemResetSpec};
 
 /// Specification for an initial state of a lattice
 pub trait InitialStateSpec<L>
@@ -21,7 +21,7 @@ where
 #[derive(Debug, Clone, Copy)]
 pub struct UniformSites<T: Copy>(pub T);
 
-impl<T, L> StateResetSpec<L> for UniformSites<T>
+impl<T, L> SystemResetSpec<L> for UniformSites<T>
 where
     T: Copy,
     L: Lattice<Site = T>,
@@ -73,7 +73,7 @@ where
     }
 }
 
-impl<'a, L, T, D, R> StateResetSpec<L> for RandomSites<'a, T, D, R>
+impl<'a, L, T, D, R> SystemResetSpec<L> for RandomSites<'a, T, D, R>
 where
     L: Lattice<Site = T>,
     D: Distribution<T>,

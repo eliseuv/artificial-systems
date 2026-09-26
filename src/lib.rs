@@ -8,9 +8,6 @@ pub mod utils;
 pub mod maths;
 pub(crate) use maths::hypercube_index;
 
-/// Abstract concepts across all systems
-pub mod systems;
-
 /// Lattices
 pub mod lattice;
 
@@ -20,11 +17,14 @@ pub mod hamiltonian;
 /// Markov Chain Monte Carlo
 pub mod mcmc;
 
-/// Cellular Automata
-pub mod cellular_automaton;
-
 /// Spin Systems
 pub mod spin_system;
+
+/// Contact Process
+pub mod contact_process;
+
+/// Time Series Matrices
+pub mod method;
 
 /// Data Files Interface
 pub mod data_io;

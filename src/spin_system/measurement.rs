@@ -1,4 +1,4 @@
-use crate::{spin_system::SpinSystem, systems::Measurement};
+use crate::{method::Measurement, spin_system::SpinSystem};
 
 /// Total Magnetization of the system
 pub struct TotalMagnetization;

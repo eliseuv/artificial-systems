@@ -7,7 +7,7 @@ use rand::Rng;
 
 use crate::{
     hamiltonian::HamiltonianSystem,
-    systems::{Measurement, StateResetSpec},
+    method::{Measurement, SystemResetSpec},
 };
 
 /// Arbitrary Markov Chain
@@ -38,7 +38,7 @@ pub trait MetropolisSampling<S: HamiltonianSystem> {
     ) -> Array2<M::Result>
     where
         M: Measurement<S>,
-        U: StateResetSpec<S>,
+        U: SystemResetSpec<S>,
         R: Rng + ?Sized;
 }
 

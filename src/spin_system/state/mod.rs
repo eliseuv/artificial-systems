@@ -9,7 +9,7 @@ use std::{
 use rand::Rng;
 use rand_distr::{Distribution, StandardUniform};
 
-use crate::{spin_system::spin::Spin, systems::StateResetSpec};
+use crate::{method::SystemResetSpec, spin_system::spin::Spin};
 
 /// Spin States
 pub trait SpinState:
@@ -77,7 +77,7 @@ pub trait SpinState:
 #[derive(Debug, Clone, Copy)]
 pub struct Ferromagnetic<T: Spin>(pub T);
 
-impl<S, T> StateResetSpec<S> for Ferromagnetic<T>
+impl<S, T> SystemResetSpec<S> for Ferromagnetic<T>
 where
     T: Spin,
     S: SpinState<Spin = T>,
@@ -112,7 +112,7 @@ where
     }
 }
 
-impl<'a, S, T, R> StateResetSpec<S> for Paramagnetic<'a, T, R>
+impl<'a, S, T, R> SystemResetSpec<S> for Paramagnetic<'a, T, R>
 where
     T: Spin,
     S: SpinState<Spin = T>,

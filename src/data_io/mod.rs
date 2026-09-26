@@ -140,7 +140,7 @@ impl DataFile {
     /// Create new data file with given specification
     pub fn new(path: &Path, spec: DataFileSpec, compessed: bool) -> Self {
         let format = spec.file_format(compessed);
-        let path = path.with_extension(format.extension());
+        let path = path.with_added_extension(format.extension());
         Self { path, format }
     }
 

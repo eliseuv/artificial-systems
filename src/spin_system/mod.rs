@@ -3,8 +3,8 @@
 
 use crate::{
     hamiltonian::HamiltonianSystem,
+    method::Measurement,
     spin_system::{spin::spin_half::SpinHalf, state::SpinState},
-    systems::Measurement,
 };
 
 /// Single spins states

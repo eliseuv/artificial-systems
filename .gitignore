@@ -1,1 +1,10 @@
+.envrc
+.direnv/
+
 /target
+
+*.cbor
+*.csv
+*.gz
+
+/data

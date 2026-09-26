@@ -2,7 +2,7 @@ use std::ops::Neg;
 
 use num_traits::Num;
 
-use crate::systems::Measurement;
+use crate::method::Measurement;
 
 pub trait HamiltonianSystem {
     /// Type of the Hamiltonian

@@ -6,8 +6,8 @@ use rand::{Rng, seq::SliceRandom};
 
 use crate::{
     mcmc::{MetropolisSampler, MetropolisSampling},
+    method::{Measurement, SystemResetSpec},
     spin_system::{SpinHalfSystem, SpinSystem, spin::spin_half::SpinHalf, state::SpinState},
-    systems::{Measurement, StateResetSpec},
 };
 
 fn sweep<S, R>(sampler: &MetropolisSampler, system: &mut S, indices: &mut [S::Index], rng: &mut R)
@@ -82,7 +82,7 @@ where
     ) -> Array2<M::Result>
     where
         M: Measurement<S>,
-        U: StateResetSpec<S>,
+        U: SystemResetSpec<S>,
         R: Rng + ?Sized,
     {
         assert!(n_runs > 0, "Number of runs must be positive!");

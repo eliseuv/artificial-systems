@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     lattice::initial_state::InitialStateSpec,
-    systems::{Measurement, StateResetSpec},
+    method::{Measurement, SystemResetSpec},
 };
 
 /// Arbitrary lattice
@@ -86,7 +86,7 @@ pub trait Lattice:
     fn reset<I>(&mut self, spec: &mut I)
     where
         Self: Sized,
-        I: StateResetSpec<Self>,
+        I: SystemResetSpec<Self>,
     {
         spec.reset(self)
     }

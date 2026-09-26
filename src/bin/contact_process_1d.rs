@@ -1,16 +1,13 @@
 use std::path::PathBuf;
 
 use artificial_systems::{
-    cellular_automaton::{
-        StochasticCellularAutomaton,
-        contact_process::{
-            cell::Binary, initial_state::Random, lattice::ContactProcess1D,
-            measurement::TotalActiveSites,
-        },
+    contact_process::{
+        ContactProcessMarkovChain, lattice::LatticeContactProcessDiffusion1D,
+        measurement::TotalActiveSites, state::AllActive,
     },
     data_io::{DataFile, DataFileSpec},
     dbg,
-    lattice::{Lattice, square_lattice::impl_1d::SquareLattice1D},
+    method::TimeSeriesMatrix,
     utils::{AutoTimer, DefaultRNG},
 };
 use clap::Parser;
@@ -83,18 +80,21 @@ fn main() -> anyhow::Result<()> {
     };
 
     // Prepare system
-    let mut system = ContactProcess1D::new(
-        SquareLattice1D::<Binary>::new(args.length, &mut Random::new(&mut rng)),
+    let mut system = LatticeContactProcessDiffusion1D::new(
+        args.length,
         args.rate,
         args.diffusion,
+        &mut AllActive,
     );
 
     // Run simulation
     info!("Running...");
-    let time_series_matrix = system.measure_multiple::<TotalActiveSites, _, _>(
+    let time_series_matrix = TotalActiveSites::time_series_matrix(
+        &mut system,
+        &mut ContactProcessMarkovChain,
+        &mut AllActive,
         args.n_steps,
         args.n_samples,
-        Random::new(&mut rng.clone()),
         &mut rng,
     );
 
