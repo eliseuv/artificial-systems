@@ -5,7 +5,9 @@
 //! of the resulting time series matrices.
 
 pub mod dynamics;
+pub mod ensemble;
 pub mod model;
+pub mod observable;
 pub mod rng;
 pub mod site;
 pub mod state;
