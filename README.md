@@ -9,7 +9,7 @@ thesis *Examining Criticality through Random Matrices across Various Universalit
 
 | Area | What is available |
 |---|---|
-| Topologies | Hypercubic lattices of any dimension (`Chain`, `Square`, `Cubic`), per-axis periodic/open boundaries, non-square shapes; arbitrary graphs (`Graph`); fully connected systems (`MeanFieldState`) |
+| Topologies | Hypercubic lattices of any dimension (`Chain`, `Square`, `Cubic`), per-axis periodic/open boundaries, non-square shapes; square lattice with Moore neighbourhoods (`Moore`); arbitrary graphs (`Graph`); fully connected systems (`MeanFieldState`) |
 | Spin models | Blume-Emery-Griffiths `H = -JΣsᵢsⱼ - KΣsᵢ²sⱼ² - H₃Σsᵢsⱼ(sᵢ+sⱼ) + DΣsᵢ² - HΣsᵢ` covering Ising (spin-½) and Blume-Capel (spin-1); `Q`-state Potts; `Q`-state clock. All on lattices, graphs and mean field |
 | Dynamics | Metropolis, heat bath (= Glauber for two-state spins); random, sequential, permutation or checkerboard site order; `T = 0` and `T = ∞` handled exactly |
 | Cellular automata | Synchronous and asynchronous application of local rules, neighbour-swap diffusion, composition of dynamics. Contact process with diffusion, Domany-Kinzel (and any totalistic binary rule), Wolfram elementary rules, Brass immune network automaton |

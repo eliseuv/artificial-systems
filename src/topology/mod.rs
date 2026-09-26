@@ -8,9 +8,11 @@ use std::{collections::VecDeque, fmt::Debug};
 
 mod graph;
 mod hypercubic;
+mod moore;
 
 pub use graph::Graph;
 pub use hypercubic::{Boundary, Chain, Cubic, Hypercubic, Square};
+pub use moore::Moore;
 
 /// Set of sites together with their neighbourhoods.
 ///
