@@ -54,3 +54,7 @@ codegen-units = 1
 # Keep dense linear algebra usable in debug test runs
 [profile.dev.package.faer]
 opt-level = 3
+
+[[bench]]
+name = "sweeps"
+harness = false
