@@ -248,18 +248,65 @@ impl<S: Spin> MeanFieldModel<S> for Beg {
     }
 
     fn mean_field_delta(&self, state: &MeanFieldState<S>, from: S, to: S) -> f64 {
-        let before = power_sums::<S>(state.counts());
-        let (f, t) = (from.value() as i128, to.value() as i128);
-        let mut after = before;
-        for (k, p) in after.iter_mut().enumerate() {
-            *p += t.pow(k as u32 + 1) - f.pow(k as u32 + 1);
+        if from == to {
+            return 0.0;
         }
-        let (tb, ta) = (
-            Self::mean_field_terms(before),
-            Self::mean_field_terms(after),
-        );
-        let delta: [i128; 5] = std::array::from_fn(|k| ta[k] - tb[k]);
-        self.mean_field_combine(delta, state.coordination(), state.len() as f64)
+        let sums = low_power_sums::<S>(state.counts());
+        self.mean_field_delta_with(sums, state, from, to)
+    }
+
+    fn mean_field_deltas(&self, state: &MeanFieldState<S>, from: S, out: &mut [f64]) {
+        let sums = low_power_sums::<S>(state.counts());
+        for (&to, d) in S::VALUES.iter().zip(out.iter_mut()) {
+            *d = if to == from {
+                0.0
+            } else {
+                self.mean_field_delta_with(sums, state, from, to)
+            };
+        }
+    }
+}
+
+/// `(P₁, P₂)` in `i64`.
+#[inline(always)]
+fn low_power_sums<S: Spin>(counts: &[u32]) -> (i64, i64) {
+    S::VALUES
+        .iter()
+        .zip(counts)
+        .fold((0, 0), |(p1, p2), (s, &n)| {
+            let (v, n) = (s.value() as i64, n as i64);
+            (p1 + n * v, p2 + n * v * v)
+        })
+}
+
+impl Beg {
+    /// Energy change of moving a site from `from` to `to` given `(P₁, P₂)`, from exact integer
+    /// differences of the pair sums (each `O(N)`, so they fit in `i64`):
+    /// `Δ(P₁²) = ΔP₁ (2P₁ + ΔP₁)`, `Δ(P₂²) = ΔP₂ (2P₂ + ΔP₂)` and
+    /// `Δ(P₁P₂) = ΔP₁P₂ + P₁ΔP₂ + ΔP₁ΔP₂`.
+    #[inline(always)]
+    fn mean_field_delta_with<S: Spin>(
+        &self,
+        (p1, p2): (i64, i64),
+        state: &MeanFieldState<S>,
+        from: S,
+        to: S,
+    ) -> f64 {
+        let (f, t) = (from.value() as i64, to.value() as i64);
+        let d = |k: u32| t.pow(k) - f.pow(k);
+        let (d1, d2, d3, d4) = (d(1), d(2), d(3), d(4));
+        let terms = [
+            d1 * (2 * p1 + d1) - d2,
+            d2 * (2 * p2 + d2) - d4,
+            2 * (d1 * p2 + p1 * d2 + d1 * d2 - d3),
+            d2,
+            d1,
+        ];
+        self.mean_field_combine(
+            terms.map(i128::from),
+            state.coordination(),
+            state.len() as f64,
+        )
     }
 }
 

@@ -124,6 +124,14 @@ pub trait MeanFieldModel<S: Site>: Clone + PartialEq + Debug + Send + Sync + 'st
 
     /// Energy change when one site goes from state `from` to state `to`.
     fn mean_field_delta(&self, state: &MeanFieldState<S>, from: S, to: S) -> f64;
+
+    /// Energy changes when one site goes from state `from` to each state, indexed by
+    /// [`Site::index`] (zero for `from` itself).
+    fn mean_field_deltas(&self, state: &MeanFieldState<S>, from: S, out: &mut [f64]) {
+        for (&to, d) in S::VALUES.iter().zip(out.iter_mut()) {
+            *d = self.mean_field_delta(state, from, to);
+        }
+    }
 }
 
 /// Energy function and update kernel of a model on a given kind of configuration.

@@ -4,9 +4,7 @@ use rand::{Rng, RngExt as _};
 
 use super::{Dynamics, SiteOrder, Sweep, beta_from_temperature};
 use crate::{
-    model::{
-        Kernel, LocalModel, MeanFieldModel, boltzmann_cumulative, check_beta, sample_cumulative,
-    },
+    model::{Kernel, LocalModel, MeanFieldModel, boltzmann_weight, check_beta},
     site::Site,
     state::{Configuration, LatticeState, MeanFieldState},
     system::SpinSystem,
@@ -22,7 +20,7 @@ use crate::{
 pub struct HeatBath {
     beta: f64,
     sweep: Sweep,
-    /// Scratch space for mean-field weights.
+    /// Scratch space for mean-field energy changes and weights.
     scratch: (Vec<f64>, Vec<f64>),
 }
 
@@ -86,24 +84,39 @@ where
     #[inline]
     fn step<R: Rng + ?Sized>(&mut self, sys: &mut SpinSystem<MeanFieldState<S>, M>, rng: &mut R) {
         let (state, model, kernel, energy) = sys.parts_mut(self.beta);
-        let (deltas, cumulative) = &mut self.scratch;
+        let (deltas, weights) = &mut self.scratch;
         deltas.resize(S::COUNT, 0.0);
-        cumulative.resize(S::COUNT, 0.0);
+        weights.resize(S::COUNT, 0.0);
         for _ in 0..state.len() {
             let old = state.random_site(rng);
-            for (&s, d) in S::VALUES.iter().zip(deltas.iter_mut()) {
-                *d = if s == old {
-                    0.0
-                } else {
-                    model.mean_field_delta(state, old, s)
-                };
+            model.mean_field_deltas(state, old, deltas);
+            let d_min = deltas.iter().copied().fold(f64::INFINITY, f64::min);
+            let mut total = 0.0;
+            for (d, w) in deltas.iter().zip(weights.iter_mut()) {
+                *w = boltzmann_weight(kernel.beta, d - d_min);
+                total += *w;
             }
-            boltzmann_cumulative(kernel.beta, deltas, cumulative);
-            let k = sample_cumulative(cumulative, rng.random());
+            let k = sample_weights(weights, rng.random::<f64>() * total);
             if k != old.index() {
                 *energy += deltas[k];
                 state.transfer(old, S::from_index(k));
             }
         }
     }
+}
+
+/// Index of the bin of `target ∈ [0, Σw)` in the cumulative sum of `weights`.
+#[inline(always)]
+fn sample_weights(weights: &[f64], target: f64) -> usize {
+    let mut acc = 0.0;
+    for (k, w) in weights.iter().enumerate() {
+        acc += w;
+        if target < acc {
+            return k;
+        }
+    }
+    weights
+        .iter()
+        .rposition(|&w| w > 0.0)
+        .expect("some state has positive weight")
 }
