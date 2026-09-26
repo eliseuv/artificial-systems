@@ -195,9 +195,14 @@ impl DataFile {
         self.create_parent_dir()?;
         let mut file = BufWriter::new(File::create(&self.path).map_err(|e| self.io_error(e))?);
         if self.gzip {
-            let mut encoder = GzEncoder::new(&mut file, Compression::default());
+            // Serialisers issue many tiny writes, which are slow to feed to the compressor directly
+            let mut encoder = BufWriter::new(GzEncoder::new(&mut file, Compression::default()));
             f(&mut encoder)?;
-            encoder.finish().map_err(|e| self.io_error(e))?;
+            encoder
+                .into_inner()
+                .map_err(|e| self.io_error(e.into_error()))?
+                .finish()
+                .map_err(|e| self.io_error(e))?;
         } else {
             f(&mut file)?;
         }
