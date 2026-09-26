@@ -9,10 +9,12 @@
 //! process with diffusion is `Compose(Asynchronous(ContactRule), Diffusion)` (see
 //! [`contact_process`]).
 
-use rand::{Rng, RngExt as _};
+use rand::Rng;
+use rand_distr::{Binomial, Distribution as _};
 
 use crate::{
     dynamics::{Dynamics, SiteOrder, Sweep},
+    rng::random_index,
     site::Site,
     state::{Configuration, LatticeState},
     topology::Topology,
@@ -125,9 +127,14 @@ where
 
 /// Exchange of neighbouring sites: `N` attempts per step, each swapping, with probability
 /// `gamma`, a uniformly random site with a uniformly random neighbour of it.
+///
+/// Failed attempts do nothing, so each step performs a `Binomial(N, γ)` number of swaps, which is
+/// how it is simulated.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Diffusion {
     gamma: f64,
+    /// Swap count distribution for the last system size.
+    swaps: Option<(usize, Binomial)>,
 }
 
 impl Diffusion {
@@ -140,7 +147,7 @@ impl Diffusion {
             (0.0..=1.0).contains(&gamma),
             "Diffusion probability must be in [0, 1], got {gamma}"
         );
-        Self { gamma }
+        Self { gamma, swaps: None }
     }
 
     /// Swap probability per attempt.
@@ -156,15 +163,21 @@ impl<S: Site, T: Topology> Dynamics<LatticeState<S, T>> for Diffusion {
             return;
         }
         let n = state.len();
+        let swaps = match self.swaps {
+            Some((len, dist)) if len == n => dist,
+            _ => {
+                let dist = Binomial::new(n as u64, self.gamma).expect("valid probability");
+                self.swaps = Some((n, dist));
+                dist
+            }
+        };
         let topology = state.topology().clone();
-        for _ in 0..n {
-            if rng.random::<f64>() < self.gamma {
-                let i = rng.random_range(0..n);
-                let neighbors = topology.neighbors(i);
-                if !neighbors.is_empty() {
-                    let j = neighbors[rng.random_range(0..neighbors.len())];
-                    state.swap(i, j as usize);
-                }
+        for _ in 0..swaps.sample(rng) {
+            let i = random_index(rng, n);
+            let neighbors = topology.neighbors(i);
+            if !neighbors.is_empty() {
+                let j = neighbors[random_index(rng, neighbors.len())];
+                state.swap(i, j as usize);
             }
         }
     }

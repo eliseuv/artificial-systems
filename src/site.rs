@@ -9,7 +9,7 @@ use std::{
     fmt::{self, Debug, Display},
 };
 
-use rand::{Rng, RngExt as _};
+use rand::Rng;
 
 /// Single site state with finitely many values.
 pub trait Site: Copy + Eq + Debug + Send + Sync + 'static {
@@ -34,7 +34,7 @@ pub trait Site: Copy + Eq + Debug + Send + Sync + 'static {
     /// Uniformly random value.
     #[inline]
     fn random<R: Rng + ?Sized>(rng: &mut R) -> Self {
-        Self::from_index(rng.random_range(0..Self::COUNT))
+        Self::from_index(crate::rng::random_index(rng, Self::COUNT))
     }
 }
 

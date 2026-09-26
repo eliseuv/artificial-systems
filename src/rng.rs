@@ -4,7 +4,7 @@
 //! and the chain's coordinates (e.g. run and sample index). Results are therefore independent
 //! of scheduling and bit-identical for any number of threads.
 
-use rand::{RngExt as _, SeedableRng};
+use rand::{Rng, RngExt as _, SeedableRng};
 use rand_xoshiro::Xoshiro256PlusPlus;
 
 /// Default pseudo random number generator.
@@ -39,6 +39,27 @@ pub fn stream(seed: u64, path: &[u64]) -> DefaultRng {
     DefaultRng::seed_from_u64(derive_seed(seed, path))
 }
 
+/// Uniformly random index in `0..n`, for `0 < n <= u32::MAX`.
+///
+/// Lemire's multiply-shift method with rejection (exactly uniform). It is always inlined, unlike
+/// `random_range` on `usize`, and every site, neighbour and state index fits in `u32`.
+#[inline(always)]
+pub fn random_index<R: Rng + ?Sized>(rng: &mut R, n: usize) -> usize {
+    debug_assert!(
+        n > 0 && u32::try_from(n).is_ok(),
+        "Index range 0..{n} not supported"
+    );
+    let n = n as u32;
+    let mut m = rng.next_u32() as u64 * n as u64;
+    if (m as u32) < n {
+        let threshold = n.wrapping_neg() % n;
+        while (m as u32) < threshold {
+            m = rng.next_u32() as u64 * n as u64;
+        }
+    }
+    (m >> 32) as usize
+}
+
 /// Fresh master seed from operating system entropy.
 ///
 /// Callers are expected to record the returned value so the run can be reproduced.
@@ -49,7 +70,21 @@ pub fn entropy_seed() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::Rng as _;
+
+    #[test]
+    fn random_index_is_uniform() {
+        let mut rng = stream(3, &[]);
+        for n in [1, 2, 3, 7, 128] {
+            let mut hits = vec![0u32; n];
+            let draws = 20_000 * n as u32;
+            for _ in 0..draws {
+                hits[random_index(&mut rng, n)] += 1;
+            }
+            for &h in &hits {
+                assert!((h as f64 - 20_000.0).abs() < 800.0, "n = {n}: {hits:?}");
+            }
+        }
+    }
 
     #[test]
     fn streams_are_deterministic() {

@@ -2,10 +2,10 @@
 
 use std::marker::PhantomData;
 
-use rand::{Rng, RngExt as _};
+use rand::Rng;
 
 use super::Configuration;
-use crate::site::Site;
+use crate::{rng::random_index, site::Site};
 
 /// Fully connected system of `N` exchangeable sites.
 ///
@@ -71,7 +71,7 @@ impl<S: Site> MeanFieldState<S> {
     /// State of a uniformly chosen site.
     #[inline]
     pub fn random_site<R: Rng + ?Sized>(&self, rng: &mut R) -> S {
-        let mut u = rng.random_range(0..self.len);
+        let mut u = random_index(rng, self.len as usize) as u32;
         for (k, &n) in self.counts.iter().enumerate() {
             if u < n {
                 return S::from_index(k);

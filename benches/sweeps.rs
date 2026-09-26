@@ -4,7 +4,7 @@ use std::{hint::black_box, sync::Arc};
 
 use artificial_systems::{
     analysis::{ZeroVariance, correlation_spectrum},
-    automaton::contact_process,
+    automaton::{Diffusion, contact_process},
     dynamics::{Dynamics, HeatBath, Metropolis},
     model::{Beg, Potts},
     rng::stream,
@@ -79,6 +79,12 @@ fn spin_sweeps(c: &mut Criterion) {
             }
             cp.step(black_box(&mut state), &mut rng)
         })
+    });
+    let mut state = LatticeState::uniform(Arc::new(Chain::periodic([128])), Binary::Inactive);
+    Init::Exact(vec![64, 64]).prepare(&mut state, &mut rng);
+    let mut diffusion = Diffusion::new(0.5);
+    group.bench_function("diffusion_chain_L128", |b| {
+        b.iter(|| diffusion.step(black_box(&mut state), &mut rng))
     });
     group.finish();
 }

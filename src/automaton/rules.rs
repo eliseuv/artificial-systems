@@ -4,7 +4,10 @@ use rand::{Rng, RngExt as _};
 use serde::{Deserialize, Serialize};
 
 use super::LocalRule;
-use crate::site::{Binary, Brass, Site, Spin};
+use crate::{
+    rng::random_index,
+    site::{Binary, Brass, Site, Spin},
+};
 
 /// Contact process rule: an active site becomes inactive with probability `1/α`, an inactive site
 /// copies the state of a uniformly random neighbour.
@@ -44,7 +47,7 @@ impl LocalRule<Binary> for ContactRule {
             Binary::Active if rng.random::<f64>() < self.recovery => Binary::Inactive,
             Binary::Active => Binary::Active,
             Binary::Inactive if neighbors.is_empty() => Binary::Inactive,
-            Binary::Inactive => sites[neighbors[rng.random_range(0..neighbors.len())] as usize],
+            Binary::Inactive => sites[neighbors[random_index(rng, neighbors.len())] as usize],
         }
     }
 

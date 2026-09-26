@@ -3,10 +3,10 @@
 //! One [`Dynamics::step`] is one Monte Carlo step, i.e. `N` single site update attempts for a
 //! system of `N` sites, so time is measured in the same units for every model.
 
-use rand::{Rng, RngExt as _, seq::SliceRandom as _};
+use rand::{Rng, seq::SliceRandom as _};
 use serde::{Deserialize, Serialize};
 
-use crate::{site::Site, topology::Topology};
+use crate::{rng::random_index, site::Site, topology::Topology};
 
 mod heat_bath;
 mod metropolis;
@@ -75,19 +75,12 @@ impl Sweep {
     {
         let n = topology.len();
         match self.order {
-            SiteOrder::Random => {
-                for _ in 0..n {
-                    let i = rng.random_range(0..n);
-                    f(i, rng);
-                }
-            }
-            SiteOrder::Sequential => (0..n).for_each(|i| f(i, rng)),
+            SiteOrder::Random | SiteOrder::Sequential => {}
             SiteOrder::Permutation => {
                 if self.buffer.len() != n {
                     self.buffer = (0..n as u32).collect();
                 }
                 self.buffer.shuffle(rng);
-                self.buffer.iter().for_each(|&i| f(i as usize, rng));
             }
             SiteOrder::Checkerboard => {
                 if self.buffer.len() != n {
@@ -99,8 +92,16 @@ impl Sweep {
                         .chain((0..n as u32).filter(|&i| colour[i as usize]))
                         .collect();
                 }
-                self.buffer.iter().for_each(|&i| f(i as usize, rng));
             }
+        }
+        // A single call site lets the compiler inline `f` into the loop
+        for k in 0..n {
+            let i = match self.order {
+                SiteOrder::Random => random_index(rng, n),
+                SiteOrder::Sequential => k,
+                SiteOrder::Permutation | SiteOrder::Checkerboard => self.buffer[k] as usize,
+            };
+            f(i, rng);
         }
     }
 }
@@ -111,7 +112,7 @@ pub(crate) fn propose_other<S: Site, R: Rng + ?Sized>(old: S, rng: &mut R) -> S 
     if S::COUNT == 2 {
         S::from_index(1 - old.index())
     } else {
-        let k = rng.random_range(0..S::COUNT - 1);
+        let k = random_index(rng, S::COUNT - 1);
         S::from_index(if k >= old.index() { k + 1 } else { k })
     }
 }
